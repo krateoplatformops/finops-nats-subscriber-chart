@@ -1,0 +1,32 @@
+{{- if .Values.natsSubscriber.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "finops-nats-subscriber-chart.fullname" . }}
+  labels:
+    {{- include "finops-nats-subscriber-chart.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "finops-nats-subscriber-chart.fullname" . }}
+  minReplicas: {{ .Values.natsSubscriber.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.natsSubscriber.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.natsSubscriber.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.natsSubscriber.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.natsSubscriber.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.natsSubscriber.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

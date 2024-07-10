@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "finops-nats-subscriber-chart.fullname" . }}
+  labels:
+  {{- include "finops-nats-subscriber-chart.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - finops.krateo.io
+  resources:
+  - configmanagervms
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - finops.krateo.io
+  resources:
+  - configmanagervms/status
+  verbs:
+  - get

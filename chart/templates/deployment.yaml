@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "finops-nats-subscriber-chart.fullname" . }}
+  labels:
+    app.kubernetes.io/component: subscriber
+    app.kubernetes.io/part-of: nats-subscriber
+    app: nats-subscriber
+  {{- include "finops-nats-subscriber-chart.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.natsSubscriber.autoscaling.enabled }}
+  replicas: {{ .Values.natsSubscriber.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: nats-subscriber
+    {{- include "finops-nats-subscriber-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nats-subscriber
+      {{- include "finops-nats-subscriber-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: subscriber
+        image: {{ .Values.natsSubscriber.image.repository }}:{{
+          .Values.natsSubscriber.image.tag | default .Chart.AppVersion
+          }}
+        env: 
+        - name: SUB_TOPIC
+          value: {{ .Values.natsSubscriber.subTopic }}
+        - name: OPT_NAMESPACE
+          value: {{ .Values.natsSubscriber.optNamespace }}
+        - name: OPT_SECRET_NAME
+          value: {{ .Values.natsSubscriber.optSecretName }}
+        - name: OPT_SECRET_NAMESPACE
+          value: {{ .Values.natsSubscriber.optSecretNamespace }}
+        imagePullPolicy: {{ .Values.natsSubscriber.image.imagePullPolicy
+          }}
+        resources: {{- toYaml .Values.natsSubscriber.resources
+          | nindent 10 }}
+        {{- with .Values.natsSubscriber.volumeMounts }}
+        volumeMounts:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        securityContext: {{- toYaml .Values.natsSubscriber.containerSecurityContext
+          | nindent 10 }}
+      imagePullSecrets: {{- toYaml .Values.imagePullSecrets
+          | nindent 6 }}
+      serviceAccountName: {{ include "finops-nats-subscriber-chart.fullname" . }}
+      terminationGracePeriodSeconds: 10
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
